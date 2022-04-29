@@ -1,18 +1,19 @@
 ﻿using System.Drawing;
+using System.Windows.Forms;
 
 namespace WinFormsApp2
 {
     public class Player
     {
-        public int posX;
-        public int posY;
-        public Image image;
+        public int PosX;
+        public int PosY;
+        public Image Image = new Bitmap(@"C:\Users\User\Desktop\WinFormsApp2\WinFormsApp2\Models\newAssassin.png");
         
-        public Player(int posX, int posY, Image image)
+        public Player(int posX, int posY)
         {
-            this.posX = posX;
-            this.posY = posY;
-            this.image = image;
+            PosX = posX;
+            PosY = posY;
         }
+        
     }
 }
