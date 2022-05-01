@@ -64,18 +64,15 @@ namespace WinFormsApp2
                     var angle = Math.Atan(tan) * 180 / Math.PI;
                     if (dX < 0)
                         angle += 180;
-                    var knife = new Blade(0, playerPosX, playerPosY, angle);
+                    var knife = new Blade(playerPosX, playerPosY, angle);
                     knifes.Add(knife);
                     break;
             }
+            Invalidate();
         }
 
-        protected override void OnPaint(PaintEventArgs e)
+        public void PaintKnifes(Graphics g)
         {
-            Graphics g = e.Graphics;
-            DoubleBuffered = true;
-            g.DrawImage(player.Image, new Rectangle(new Point(player.PosX, player.PosY), new Size(64, 92)), 0, 0, 64,
-                92, GraphicsUnit.Pixel);
             foreach (var knife in knifes)
             {
                 g.TranslateTransform(knife.PlayerPosX, knife.PlayerPosY);
@@ -87,6 +84,14 @@ namespace WinFormsApp2
                 g.ResetTransform();
                 Invalidate();
             }
+        }
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            Graphics g = e.Graphics;
+            DoubleBuffered = true;
+            g.DrawImage(player.Image, new Rectangle(new Point(player.PosX, player.PosY), new Size(64, 92)), 0, 0, 64,
+                92, GraphicsUnit.Pixel);
+            PaintKnifes(g);
         }
     }
 }
