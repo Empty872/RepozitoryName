@@ -6,18 +6,18 @@ namespace WinFormsApp2
     public class Blade
     {
         public int PosX;
-        public int PosY;
         public Image Image = new Bitmap(@"C:\Users\User\Desktop\WinFormsApp2\WinFormsApp2\Models\bigClearBlade.png");
+        public int PlayerPosX;
+        public int PlayerPosY;
+        public double Angle;
         
 
-        public Blade(int posX, int posY)
+        public Blade(int posX, int  playerPosX, int playerPosY, double angle)
         {
             PosX = posX;
-            PosY = posY;
-        }
-        public void Fly(Graphics g)
-        {
-            PosX += 5;
+            PlayerPosX = playerPosX;
+            PlayerPosY = playerPosY;
+            Angle = angle;
         }
 
     }

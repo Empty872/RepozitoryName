@@ -10,26 +10,26 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using Microsoft.VisualBasic.Devices;
 
 namespace WinFormsApp2
 {
     public partial class Form1 : Form
     {
         public Player player;
-        public bool shoot;
-        public double xCenter;
-        public double yCenter;
-        public double angle;
 
-        private List<Blade> knifes = new(){new Blade(100, 100)};
+        private List<Blade> knifes = new();
+
         public Form1()
         {
             InitializeComponent();
             player = new Player(200, 200);
+            Invalidate();
             WindowState = FormWindowState.Maximized;
             KeyDown += OnPress;
-            MouseClick+=ThrowTheBlade;
+            MouseClick += ThrowTheBlade;
         }
+
         public void OnPress(object sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
@@ -47,61 +47,46 @@ namespace WinFormsApp2
                     player.PosX += 5;
                     break;
             }
-            
+
             Invalidate();
-            
         }
+
         public void ThrowTheBlade(object sender, MouseEventArgs e)
         {
             switch (e.Button)
             {
                 case MouseButtons.Left:
-                    xCenter = player.PosX + player.Image.Width / 2;
-                    yCenter = player.PosY + player.Image.Height / 2;
-                    angle = Math.Atan(e.Y - yCenter) /
-                                (e.X - xCenter);
-                    shoot = true;
-                    // Paint += (sender, args) =>
-                    // {
-                    //     args.Graphics.TranslateTransform(xCenter, yCenter);
-                    //     args.Graphics.RotateTransform((float) -angle);
-                    //     var knife = new Blade(xCenter, yCenter);
-                    //     args.Graphics.DrawImage(knife.Image,
-                    //         new Rectangle(new Point(knife.PosX, knife.PosY), new Size(44, 14)),
-                    //         0, 0, 44, 14, GraphicsUnit.Pixel);
-                    //     knifes.Add(knife);
-                    //     args.Graphics.ResetTransform();
-                    // };
+                    var playerPosX = player.PosX + player.Image.Width / 2;
+                    var playerPosY = player.PosY + player.Image.Height / 2;
+                    var dY = e.Y - playerPosY;
+                    var dX = e.X - playerPosX;
+                    var tan = (double) dY / (double) dX;
+                    var angle = Math.Atan(tan) * 180 / Math.PI;
+                    if (dX < 0)
+                        angle += 180;
+                    var knife = new Blade(0, playerPosX, playerPosY, angle);
+                    knifes.Add(knife);
                     break;
             }
         }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             Graphics g = e.Graphics;
             DoubleBuffered = true;
-            g.DrawImage(player.Image, new Rectangle(new Point(player.PosX , player.PosY), new Size(64, 92)), 0, 0, 64, 92, GraphicsUnit.Pixel);
-            if (shoot)
-            {
-                g.TranslateTransform((float)xCenter, (float)yCenter);
-                g.RotateTransform((float)(angle*180/Math.PI));
-                var knife = new Blade((int)xCenter, (int)yCenter);
-                g.DrawImage(knife.Image,
-                    new Rectangle(new Point(0, 0), new Size(44, 14)),
-                    0, 0, 44, 14, GraphicsUnit.Pixel);
-                knifes.Add(knife);
-                g.ResetTransform();
-                shoot = false;
-            }
+            g.DrawImage(player.Image, new Rectangle(new Point(player.PosX, player.PosY), new Size(64, 92)), 0, 0, 64,
+                92, GraphicsUnit.Pixel);
             foreach (var knife in knifes)
             {
+                g.TranslateTransform(knife.PlayerPosX, knife.PlayerPosY);
+                g.RotateTransform((float) knife.Angle);
                 knife.PosX += 5;
                 g.DrawImage(knife.Image,
-                    new Rectangle(new Point(knife.PosX, knife.PosY), new Size(44, 14)),
+                    new Rectangle(new Point(knife.PosX, 0), new Size(44, 14)),
                     0, 0, 44, 14, GraphicsUnit.Pixel);
+                g.ResetTransform();
                 Invalidate();
             }
-            
         }
-        
     }
 }
