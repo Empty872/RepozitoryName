@@ -1,50 +1,59 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Drawing2D;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using Microsoft.VisualBasic.Devices;
 
 namespace WinFormsApp2
 {
     public partial class Form1 : Form
     {
-        public Player player;
-
-        private List<Blade> knifes = new();
+        public Player Player;
+        public Enemy NoneEnemy = new (0, 0);
+        private List<Blade> Blades = new();
+        private List<Enemy> Enemies = new();
+        private bool GameIsOver;
 
         public Form1()
         {
-            InitializeComponent();
-            player = new Player(200, 200);
-            Invalidate();
+            
             WindowState = FormWindowState.Maximized;
+            InitializeComponent();
+            Invalidate();
+            Player = new Player(900, 400);
             KeyDown += OnPress;
             MouseClick += ThrowTheBlade;
         }
 
+        public void GameOver(Graphics g)
+        {
+            if (GameIsOver)
+            {
+                g.Clear(Color.White);
+                var gameOverImage=new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\GameOver.png"));
+                g.DrawImage(gameOverImage, new Point(Width/2-gameOverImage.Width/2, Height/2-gameOverImage.Height/2));
+            }
+        }
+        
         public void OnPress(object sender, KeyEventArgs e)
         {
             switch (e.KeyCode)
             {
                 case Keys.W:
-                    player.PosY -= 5;
+                    Player.PosY -= 5;
+                    Player.CenterPosY -= 5;
                     break;
                 case Keys.S:
-                    player.PosY += 5;
+                    Player.PosY += 5;
+                    Player.CenterPosY += 5;
                     break;
                 case Keys.A:
-                    player.PosX -= 5;
+                    Player.PosX -= 5;
+                    Player.CenterPosX -= 5;
                     break;
                 case Keys.D:
-                    player.PosX += 5;
+                    Player.PosX += 5;
+                    Player.CenterPosX += 5;
                     break;
             }
 
@@ -56,42 +65,119 @@ namespace WinFormsApp2
             switch (e.Button)
             {
                 case MouseButtons.Left:
-                    var playerPosX = player.PosX + player.Image.Width / 2;
-                    var playerPosY = player.PosY + player.Image.Height / 2;
-                    var dY = e.Y - playerPosY;
-                    var dX = e.X - playerPosX;
-                    var tan = (double) dY / (double) dX;
-                    var angle = Math.Atan(tan) * 180 / Math.PI;
+                    var dY = e.Y - Player.CenterPosY;
+                    var dX = e.X - Player.CenterPosX;
+                    var angle = Math.Atan((double) dY / (double) dX) * 180 / Math.PI;
                     if (dX < 0)
                         angle += 180;
-                    var knife = new Blade(playerPosX, playerPosY, angle);
-                    knifes.Add(knife);
+                    var knife = new Blade(Player.CenterPosX, Player.CenterPosY, angle);
+                    Blades.Add(knife);
                     break;
             }
             Invalidate();
         }
 
-        public void PaintKnifes(Graphics g)
+        public void PaintBlades(Graphics g)
         {
-            foreach (var knife in knifes)
+            foreach (var blade in Blades)
             {
-                g.TranslateTransform(knife.PlayerPosX, knife.PlayerPosY);
-                g.RotateTransform((float) knife.Angle);
-                knife.PosX += 5;
-                g.DrawImage(knife.Image,
-                    new Rectangle(new Point(knife.PosX, 0), new Size(44, 14)),
-                    0, 0, 44, 14, GraphicsUnit.Pixel);
+                g.TranslateTransform(blade.PlayerCenterX, blade.PlayerCenterY);
+                g.RotateTransform((float) blade.Angle);
+                blade.Distance += 5;
+                g.DrawImage(blade.Image, blade.Distance, 0, blade.Image.Width, blade.Image.Height);
                 g.ResetTransform();
                 Invalidate();
             }
         }
+
+        public void PaintEnemies(Graphics g)
+        {
+            foreach (var enemy in Enemies)
+            {
+                var dirX = Player.CenterPosX-enemy.CenterPosX;
+                var dirY = Player.CenterPosY-enemy.CenterPosY;
+                enemy.PosX += Math.Sign(dirX);
+                enemy.PosY += Math.Sign(dirY);
+                enemy.CenterPosX += Math.Sign(dirX);
+                enemy.CenterPosY += Math.Sign(dirY);
+                g.DrawImage(enemy.Image, enemy.PosX, enemy.PosY, enemy.Image.Width, enemy.Image.Height);
+                Invalidate();
+            }
+        }
+
+        private void EnemyContactBlade()
+        {
+            var deletedEnemies = new List<Enemy>();
+            var deletedBlades = new List<Blade>();
+            foreach (var blade in Blades)
+            {
+                foreach (var enemy in Enemies)
+                {
+                    var newX = (blade.Distance + blade.Image.Width) * Math.Cos(blade.Angle * Math.PI / 180) + blade.PlayerCenterX;
+                    var newY = (blade.Distance + blade.Image.Width) * Math.Sin(blade.Angle * Math.PI / 180) + blade.PlayerCenterY;
+                    if (newX <= enemy.PosX + enemy.Image.Width && newX >= enemy.PosX &&
+                        newY <= enemy.PosY + enemy.Image.Height && newY >= enemy.PosY)
+                    {
+                        deletedBlades.Add(blade);
+                        deletedEnemies.Add(enemy);
+                        break;
+                    }
+                }
+            }
+
+            foreach (var blade in deletedBlades)
+            {
+                Blades.Remove(blade);
+            }
+
+            foreach (var enemy in deletedEnemies)
+            {
+                Enemies.Remove(enemy);
+            }
+        }
+
+        private void PlayerContactEnemy()
+        {
+            foreach (var enemy in Enemies)
+            {
+                if ((enemy.PosX >= Player.PosX && enemy.PosX <= Player.PosX + Player.Image.Width ||
+                     enemy.PosX + enemy.Image.Width >= Player.PosX &&
+                     enemy.PosX + enemy.Image.Width <= Player.PosX + Player.Image.Width) &&
+                    (enemy.PosY >= Player.PosY && enemy.PosY <= Player.PosY + Player.Image.Height ||
+                     enemy.PosY + enemy.Image.Height >= Player.PosY &&
+                     enemy.PosY + enemy.Image.Height <= Player.PosY + Player.Image.Height))
+                {
+                    GameIsOver = true;
+                    break;
+                }
+            }
+        }
+
+        public void CreateEnemy()
+        {
+            var firstTupleX = new Random().Next(-NoneEnemy.Image.Width, Width + NoneEnemy.Image.Width);
+            var firstTupleY = new Random().Next(2) == 0 ? -NoneEnemy.Image.Height : Height + NoneEnemy.Image.Height;
+            var firstTuple = Tuple.Create(firstTupleX, firstTupleY);
+            var secondTupleX = new Random().Next(2) == 0 ? -NoneEnemy.Image.Width : Width + NoneEnemy.Image.Width;
+            var secondTupleY = new Random().Next(-NoneEnemy.Image.Height, Height + NoneEnemy.Image.Height);
+            var secondTuple = Tuple.Create(secondTupleX, secondTupleY);
+            var finalTuple = new Random().Next(2) == 0 ? firstTuple : secondTuple;
+            Enemies.Add(new Enemy(finalTuple.Item1, finalTuple.Item2));
+        }
+        
         protected override void OnPaint(PaintEventArgs e)
         {
+            
             Graphics g = e.Graphics;
             DoubleBuffered = true;
-            g.DrawImage(player.Image, new Rectangle(new Point(player.PosX, player.PosY), new Size(64, 92)), 0, 0, 64,
-                92, GraphicsUnit.Pixel);
-            PaintKnifes(g);
+            g.DrawImage(Player.Image, Player.PosX, Player.PosY, Player.Image.Width, Player.Image.Height);
+            if (Enemies.Count<4)
+                CreateEnemy();
+            PaintEnemies(g);
+            PaintBlades(g);
+            EnemyContactBlade();
+            PlayerContactEnemy();
+            GameOver(g);
         }
     }
 }

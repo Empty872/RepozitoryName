@@ -6,17 +6,17 @@ namespace WinFormsApp2
 {
     public class Blade
     {
-        public int PosX;
+        public int Distance;
         public Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigClearBlade.png"));
-        public int PlayerPosX;
-        public int PlayerPosY;
+        public int PlayerCenterX;
+        public int PlayerCenterY;
         public double Angle;
         
 
-        public Blade(int  playerPosX, int playerPosY, double angle)
+        public Blade(int playerCenterX, int playerCenterY, double angle)
         {
-            PlayerPosX = playerPosX;
-            PlayerPosY = playerPosY;
+            PlayerCenterX = playerCenterX;
+            PlayerCenterY = playerCenterY;
             Angle = angle;
         }
 
