@@ -1,4 +1,11 @@
-﻿namespace WinFormsApp2
+﻿using System.Windows.Forms;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+
+namespace WinFormsApp2
 {
     partial class Form1
     {
@@ -29,9 +36,10 @@
         /// </summary>
         private void InitializeComponent()
         {
+            
             this.components = new System.ComponentModel.Container();
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(800, 450);
+            this.ClientSize = new System.Drawing.Size(1920, 1080);
             this.Text = "Form1";
         }
 

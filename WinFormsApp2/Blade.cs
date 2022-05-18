@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
 
@@ -11,6 +12,7 @@ namespace WinFormsApp2
         public int PlayerCenterX;
         public int PlayerCenterY;
         public double Angle;
+        public static List<int> AdditionalBlades = new List<int>(){0};
         
 
         public Blade(int playerCenterX, int playerCenterY, double angle)

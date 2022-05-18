@@ -9,14 +9,17 @@ namespace WinFormsApp2
         public int PosY;
         public int CenterPosX;
         public int CenterPosY;
-        public Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigSlime.png"));
+        public static Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigSlime.png"));
+        public int Health;
 
-        public Enemy(int posX, int posY)
+        public Enemy(int posX, int posY, int health)
         {
             PosY = posY;
             PosX = posX;
             CenterPosX = posX + Image.Width / 2;
             CenterPosY = posY + Image.Height / 2;
+            Health = health;
         }
+
     }
 }
