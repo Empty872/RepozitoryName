@@ -8,14 +8,13 @@ namespace WinFormsApp2
     public class Blade
     {
         public int Distance;
-        public Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigClearBlade.png"));
-        public int PlayerCenterX;
-        public int PlayerCenterY;
+        public static Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigClearBlade.png"));
+        public float PlayerCenterX;
+        public float PlayerCenterY;
         public double Angle;
-        public static List<int> AdditionalBlades = new List<int>(){0};
         
 
-        public Blade(int playerCenterX, int playerCenterY, double angle)
+        public Blade(float playerCenterX, float playerCenterY, double angle)
         {
             PlayerCenterX = playerCenterX;
             PlayerCenterY = playerCenterY;

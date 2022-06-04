@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.DirectoryServices.ActiveDirectory;
 using System.Drawing;
 using System.IO;
@@ -8,13 +9,13 @@ namespace WinFormsApp2
 {
     public class Player
     {
-        public int PosX;
-        public int PosY;
-        public int DirX;
-        public int DirY;
+        public static float PosX;
+        public static float PosY;
+        public static float DirX;
+        public static float DirY;
         public static Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\newAssassin.png"));
-        public int CenterX;
-        public int CenterY;
+        public static float CenterX;
+        public static float CenterY;
         public bool IsMoving;
         public bool CanAttack = true;
         public bool UltimateIsReady = true;
