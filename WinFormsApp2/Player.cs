@@ -7,43 +7,60 @@ using System.Windows.Forms;
 
 namespace WinFormsApp2
 {
-    public class Player
+    public static class Player
     {
         public static float PosX;
         public static float PosY;
-        public static float DirX;
-        public static float DirY;
-        public static Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\newAssassin.png"));
-        public static float CenterX;
+        public static float DirRight;
+        public static float DirDown;
+        public static float DirLeft;
+        public static float DirUp;
+
+        public static readonly Image Image = new Bitmap(Path.Combine(
+            new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
+            "Models\\newAssassin.png"));
+
+        public static int ImageWidth = Image.Width;
+        public static int ImageHeight = Image.Height;
+        public static float CenterX ;
         public static float CenterY;
-        public bool IsMoving;
-        public bool CanAttack = true;
-        public bool UltimateIsReady = true;
+        public static bool CanAttack;
+        public static bool UltimateIsReady;
+        public static float Speed;
 
-        public Player(int posX, int posY)
+        
+
+        public static void Move(object sender, EventArgs e)
+        {
+            if (PosX + ImageWidth < 1726+Form1.LabelForPanel.Width)
+            {
+                PosX += DirRight*Speed;
+                CenterX += DirRight*Speed;
+            }
+
+            if (PosX >63+Form1.LabelForPanel.Width)
+            {
+                PosX -= DirLeft*Speed;
+                CenterX -= DirLeft*Speed;
+            }
+            if (PosY + ImageHeight < 936)
+            {
+                PosY += DirDown*Speed;
+                CenterY += DirDown*Speed;
+            }
+            if (PosY > 66)
+            {
+                PosY -= DirUp*Speed;
+                CenterY -= DirUp*Speed;
+            }
+        }
+
+        public static void MakeNewPlayer(int posX, int posY)
         {
             PosX = posX;
             PosY = posY;
-            CenterX = posX + Image.Width / 2;
-            CenterY = posY + Image.Height / 2;
-        }
-
-        public void Move(object sender, EventArgs e)
-        {
-            if (!IsMoving)
-                return;
-            PosX += DirX;
-            CenterX += DirX;
-            PosY += DirY;
-            CenterY += DirY;
-        }
-
-        public void MakeNewPlayer(int posX, int posY)
-        {
-            PosX = posX;
-            PosY = posY;
-            CenterX = PosX + Image.Width / 2;
-            CenterY = PosY + Image.Height / 2;
+            CenterX = PosX + ImageWidth / 2;
+            CenterY = PosY + ImageHeight / 2;
             CanAttack = true;
             UltimateIsReady = true;
         }

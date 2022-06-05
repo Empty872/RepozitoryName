@@ -13,8 +13,7 @@ namespace WinFormsApp2
 {
     public partial class  Form1 : Form
     {
-        public Player Player;
-        public List<Blade> Blades = new();
+        public static List<Blade> Blades = new();
         public static List<Enemy> Enemies = new();
         private bool GameIsOver;
         private Button StartGameButton;
@@ -31,12 +30,16 @@ namespace WinFormsApp2
         public static Label LabelForDefeatedEnemies;
         public static Label LabelForUltimate;
         public static Label IndicatorForUltimate;
-        public static Label SpikedBallLabel;
+        public static Label LabelForSpikedBall;
+        public static Label LabelForAttack;
+        public static Label LabelForSpeed;
         private SoundPlayer ThrownBladeSound;
         private SoundPlayer GameOverSound;
         private Label LabelForRecord;
         private Label LabelForScore;
-
+        public static Image GrassImage =  new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\grass.png"));
+        public static Image BushImage =  new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bushes.png"));
+        
 
         public Form1()
         {
@@ -50,7 +53,6 @@ namespace WinFormsApp2
             MakeButtons();
             KeyPreview = true;
             WindowState = FormWindowState.Maximized;
-            Player = new Player(960, 450);
             KeyDown += OnPress;
             KeyUp += OnUnpress;
             MouseClick += ThrowTheBlade;
@@ -61,17 +63,21 @@ namespace WinFormsApp2
         private void ShowLabels()
         {
             LabelForDefeatedEnemies.Show();
+            LabelForAttack.Show();
             LabelForPanel.Show();
             LabelForDefeatedEnemies.Update();
+            LabelForAttack.Update();
             LabelForPanel.Update();
         }
         private void HideLabels()
         {
             IndicatorForUltimate.Hide();
             LabelForDefeatedEnemies.Hide();
+            LabelForAttack.Hide();
             LabelForUltimate.Hide();
+            LabelForSpeed.Hide();
             LabelForPanel.Hide();
-            SpikedBallLabel.Hide();
+            LabelForSpikedBall.Hide();
         }
 
         private void CreateLabels()
@@ -83,13 +89,19 @@ namespace WinFormsApp2
             };
             LabelForDefeatedEnemies = new Label
             {
-                Location = new Point(10, 10),
+                Location = new Point(10, 0),
                 Size = new Size(120, 120),
                 Image = new Bitmap(Enemy.Image, 90, 72),
                 BackColor = Color.SaddleBrown,
                 Text = DefeatedEnemiesCount.ToString(),
                 Font = new Font("Arial", 12, FontStyle.Bold),
                 TextAlign = ContentAlignment.BottomRight
+            };
+            LabelForAttack = new Label
+            {
+                Size = new Size(120, 120),
+                Location = new Point(10, 120),
+                BackColor = Color.SaddleBrown
             };
             LabelForUltimate = new Label
             {
@@ -107,11 +119,16 @@ namespace WinFormsApp2
                     "Models\\greenCircle.png")),
                 BackColor = Color.SaddleBrown
             };
-            SpikedBallLabel = new Label
+            LabelForSpikedBall = new Label
             {
                 Size = new Size(120, 120),
                 Image = new Bitmap(new Bitmap(Path.Combine(
                 new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\spikedBallLabel.png")), 120, 120),
+                BackColor = Color.SaddleBrown
+            };
+            LabelForSpeed = new Label
+            {
+                Size = new Size(120, 120),
                 BackColor = Color.SaddleBrown
             };
             LabelForRecord = new Label
@@ -129,7 +146,7 @@ namespace WinFormsApp2
                 BackColor = Color.White
             };
             
-            Controls.AddRange(new []{LabelForDefeatedEnemies, LabelForUltimate, IndicatorForUltimate, SpikedBallLabel, LabelForPanel});
+            Controls.AddRange(new []{LabelForDefeatedEnemies, LabelForAttack, LabelForUltimate, IndicatorForUltimate, LabelForSpikedBall, LabelForSpeed, LabelForPanel});
             HideLabels();
             Controls.Add(LabelForRecord);
             Controls.Add(LabelForScore);
@@ -194,29 +211,42 @@ namespace WinFormsApp2
 
         public void OnPress(object sender, KeyEventArgs e)
         {
-            Player.IsMoving = true;
             switch (e.KeyCode)
             {
                 case Keys.W:
-                    Player.DirY = -3;
+                    Player.DirUp = 3;
                     break;
                 case Keys.S:
-                    Player.DirY = 3;
+                    Player.DirDown = 3;
                     break;
                 case Keys.A:
-                    Player.DirX = -3;
+                    Player.DirLeft = 3;
                     break;
                 case Keys.D:
-                    Player.DirX = 3;
+                    Player.DirRight = 3;
                     break;
             }
         }
 
         public void OnUnpress(object sender, KeyEventArgs e)
         {
-            Player.DirX = 0;
-            Player.DirY = 0;
-            Player.IsMoving = false;
+            switch (e.KeyCode)
+            {
+                case Keys.W:
+                    Player.DirUp = 0;
+                    break;
+                case Keys.S:
+                    Player.DirDown = 0;
+                    break;
+                case Keys.A:
+                    Player.DirLeft = 0;
+                    break;
+                case Keys.D:
+                    Player.DirRight = 0;
+                    break;
+            }
+
+            
         }
 
         public void ThrowTheBlade(object sender, MouseEventArgs e)
@@ -234,6 +264,22 @@ namespace WinFormsApp2
                     TimerCooldownAtack.Start();
                     ThrownBladeSound.Play();
                     Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle));
+                    if (Upgrades.CanThrowThreeBlades)
+                    {
+                        Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle-30));
+                        Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle+30));
+                    }
+                    if (Upgrades.CanThrowDoubleBlade)
+                    {
+                        var timer = new Timer(100);
+                        timer.Elapsed += (object sender, ElapsedEventArgs e) =>
+                        {
+                            lock (Blades)
+                                Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle));
+                            timer.Stop();
+                        };
+                        timer.Start();
+                    }
                     Player.CanAttack = false;
                     TimerCooldownAtack.Start();
                     break;
@@ -261,12 +307,15 @@ namespace WinFormsApp2
 
         public void PaintBlades(Graphics g)
         {
-            foreach (var blade in Blades)
+            lock (Blades)
             {
-                g.TranslateTransform(blade.PlayerCenterX, blade.PlayerCenterY);
-                g.RotateTransform((float) blade.Angle);
-                g.DrawImage(Blade.Image, blade.Distance, 0, Blade.Image.Width, Blade.Image.Height);
-                g.ResetTransform();
+                foreach (var blade in Blades)
+                {
+                    g.TranslateTransform(blade.PlayerCenterX, blade.PlayerCenterY);
+                    g.RotateTransform((float) blade.Angle);
+                    g.DrawImage(Blade.Image, blade.Distance, 0, Blade.Image.Width, Blade.Image.Height);
+                    g.ResetTransform();
+                }
             }
         }
 
@@ -295,38 +344,42 @@ namespace WinFormsApp2
         {
             var deletedEnemies = new List<Enemy>();
             var deletedBlades = new List<Blade>();
-            foreach (var blade in Blades)
+            lock (Blades)
             {
-                var newX = (blade.Distance + Blade.Image.Width) * Math.Cos(blade.Angle * Math.PI / 180) +
-                           blade.PlayerCenterX;
-                var newY = (blade.Distance + Blade.Image.Width) * Math.Sin(blade.Angle * Math.PI / 180) +
-                           blade.PlayerCenterY;
-                if (newX + 100 < 0 || newX - 100 > Width || newY + 100 < 0 || newY - 100 > Height)
+                foreach (var blade in Blades)
                 {
-                    deletedBlades.Add(blade);
-                    continue;
-                }
-
-                foreach (var enemy in Enemies)
-                {
-                    if (enemy.ContactWithBlade(blade))
+                    var newX = (blade.Distance + Blade.Image.Width) * Math.Cos(blade.Angle * Math.PI / 180) +
+                               blade.PlayerCenterX;
+                    var newY = (blade.Distance + Blade.Image.Width) * Math.Sin(blade.Angle * Math.PI / 180) +
+                               blade.PlayerCenterY;
+                    if (newX + 100 < 0 || newX - 100 > Width || newY + 100 < 0 || newY - 100 > Height)
                     {
                         deletedBlades.Add(blade);
-                        deletedEnemies.Add(enemy);
-                        DefeatedEnemiesCount++;
-                        LabelForDefeatedEnemies.Text = DefeatedEnemiesCount.ToString();
-                        if (DefeatedEnemiesCount % 20 == 0 && DefeatedEnemiesCount!=0 && Upgrades.possibleUpgrades.Count!=0)
-                            Upgrades.possibleUpgrades[new Random().Next(Upgrades.possibleUpgrades.Count)]();
-                        LabelForDefeatedEnemies.Update();
-
-                        break;
+                        continue;
                     }
-                }
+
+                    foreach (var enemy in Enemies)
+                    {
+                        if (enemy.ContactWithBlade(blade))
+                        {
+                            deletedBlades.Add(blade);
+                            deletedEnemies.Add(enemy);
+                            DefeatedEnemiesCount++;
+                            LabelForDefeatedEnemies.Text = DefeatedEnemiesCount.ToString();
+                            if (DefeatedEnemiesCount % 20 == 0 && DefeatedEnemiesCount != 0 &&
+                                Upgrades.possibleUpgrades.Count != 0)
+                                Upgrades.possibleUpgrades[new Random().Next(Upgrades.possibleUpgrades.Count)]();
+                            LabelForDefeatedEnemies.Update();
+
+                            break;
+                        }
+                    }
 
 
-                foreach (var deletedEnemy in deletedEnemies)
-                {
-                    Enemies.Remove(deletedEnemy);
+                    foreach (var deletedEnemy in deletedEnemies)
+                    {
+                        Enemies.Remove(deletedEnemy);
+                    }
                 }
             }
 
@@ -352,10 +405,10 @@ namespace WinFormsApp2
         {
             if (Enemies.Count >= DefeatedEnemiesCount / (5 * Enemies.Count + 1) + 1)
                 return;
-            var firstTupleX = new Random().Next(-Enemy.Image.Width, Width);
+            var firstTupleX = new Random().Next(LabelForPanel.Right-Enemy.Image.Width, Width);
             var firstTupleY = new Random().Next(2) == 0 ? -Enemy.Image.Height : Height;
             var firstTuple = Tuple.Create(firstTupleX, firstTupleY);
-            var secondTupleX = new Random().Next(2) == 0 ? -Enemy.Image.Width : Width;
+            var secondTupleX = new Random().Next(2) == 0 ? LabelForPanel.Right-Enemy.Image.Width : Width;
             var secondTupleY = new Random().Next(-Enemy.Image.Height, Height);
             var secondTuple = Tuple.Create(secondTupleX, secondTupleY);
             var finalTuple = new Random().Next(2) == 0 ? firstTuple : secondTuple;
@@ -382,6 +435,7 @@ namespace WinFormsApp2
             Controls.Add(RestartButton);
             StartGameButton.Click += (sender, e) =>
             {
+                BackgroundImage = GrassImage;
                 StartNewGame();
                 Controls.Remove(StartGameButton);
             };
@@ -416,7 +470,7 @@ namespace WinFormsApp2
             if (!GameIsStarted)
                 return;
             DoubleBuffered = true;
-            g.DrawImage(Player.Image, Player.PosX, Player.PosY, Player.Image.Width, Player.Image.Height);
+            g.DrawImage(Player.Image, Player.PosX, Player.PosY, Player.ImageWidth, Player.ImageHeight);
             CreateEnemies();
             PaintEnemies(g);
             PaintBlades(g);
@@ -426,6 +480,7 @@ namespace WinFormsApp2
             }
             EnemyContactBlade();
             PlayerContactEnemy();
+            g.DrawImage(BushImage, LabelForPanel.Width, 0, BushImage.Width, BushImage.Height);
             Invalidate();
         }
     }

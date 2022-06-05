@@ -10,7 +10,7 @@ namespace WinFormsApp2
         public float PosY;
         public float CenterPosX;
         public float CenterPosY;
-        public static Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigSlime.png"));
+        public static readonly Image Image = new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bigSlime.png"));
 
         public Enemy (float posX, float posY)
         {
@@ -39,8 +39,8 @@ namespace WinFormsApp2
         }
         public bool ContactWithPlayer()
         {
-            return ContactWithSomething(Player.PosX, Player.PosX + Player.Image.Width, Player.PosY,
-                Player.PosY + Player.Image.Height);
+            return ContactWithSomething(Player.PosX, Player.PosX + Player.ImageWidth, Player.PosY,
+                Player.PosY + Player.ImageHeight);
         }
         public bool ContactWithSpikedBall()
         {
