@@ -11,7 +11,7 @@ using Timer = System.Timers.Timer;
 
 namespace WinFormsApp2
 {
-    public partial class  Form1 : Form
+    public partial class Form1 : Form
     {
         public static List<Blade> Blades = new();
         public static List<Enemy> Enemies = new();
@@ -19,13 +19,13 @@ namespace WinFormsApp2
         private Button StartGameButton;
         private bool GameIsStarted;
         private Button RestartButton;
-        private int DefeatedEnemiesCount;
+        public static int DefeatedEnemiesCount;
         private int Record;
         private Timer TimerForEnemies;
         private Timer TimerForPlayer;
         public static Timer TimerForBlades;
-        private Timer TimerCooldownAtack;
-        private Timer TimerCooldownUltimate;
+        private Timer TimerCooldownAttack;
+        public static Timer TimerCooldownUltimate;
         public static Label LabelForPanel;
         public static Label LabelForDefeatedEnemies;
         public static Label LabelForUltimate;
@@ -35,11 +35,16 @@ namespace WinFormsApp2
         public static Label LabelForSpeed;
         private SoundPlayer ThrownBladeSound;
         private SoundPlayer GameOverSound;
+        private SoundPlayer SlowDownSound;
         private Label LabelForRecord;
         private Label LabelForScore;
-        public static Image GrassImage =  new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\grass.png"));
-        public static Image BushImage =  new Bitmap(Path.Combine(new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bushes.png"));
-        
+
+        public static Image GrassImage = new Bitmap(Path.Combine(
+            new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\grass.png"));
+
+        public static Image BushImage = new Bitmap(Path.Combine(
+            new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\bushes.png"));
+
 
         public Form1()
         {
@@ -49,13 +54,17 @@ namespace WinFormsApp2
             GameOverSound = new SoundPlayer(Path.Combine(
                 new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
                 "Sounds\\проигрыш.wav"));
+            SlowDownSound =new SoundPlayer(Path.Combine(
+                new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
+                "Sounds\\замедление.wav"));
+            
             InitializeComponent();
             MakeButtons();
             KeyPreview = true;
             WindowState = FormWindowState.Maximized;
             KeyDown += OnPress;
             KeyUp += OnUnpress;
-            MouseClick += ThrowTheBlade;
+            MouseClick += Atack;
             MakeTimers();
             CreateLabels();
         }
@@ -69,6 +78,7 @@ namespace WinFormsApp2
             LabelForAttack.Update();
             LabelForPanel.Update();
         }
+
         private void HideLabels()
         {
             IndicatorForUltimate.Hide();
@@ -106,9 +116,6 @@ namespace WinFormsApp2
             LabelForUltimate = new Label
             {
                 Size = new Size(120, 120),
-                Image = new Bitmap(new Bitmap(Path.Combine(
-                    new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
-                    "Models\\need.png")), 120, 120),
                 BackColor = Color.SaddleBrown,
             };
             IndicatorForUltimate = new Label
@@ -123,7 +130,8 @@ namespace WinFormsApp2
             {
                 Size = new Size(120, 120),
                 Image = new Bitmap(new Bitmap(Path.Combine(
-                new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName, "Models\\spikedBallLabel.png")), 120, 120),
+                    new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
+                    "Models\\spikedBallLabel.png")), 120, 120),
                 BackColor = Color.SaddleBrown
             };
             LabelForSpeed = new Label
@@ -132,7 +140,7 @@ namespace WinFormsApp2
                 BackColor = Color.SaddleBrown
             };
             LabelForRecord = new Label
-            { 
+            {
                 Location = new Point(1025, 70),
                 Font = new Font("Arial", 30, FontStyle.Bold),
                 Size = new Size(330, 60),
@@ -145,8 +153,12 @@ namespace WinFormsApp2
                 Size = new Size(300, 60),
                 BackColor = Color.White
             };
-            
-            Controls.AddRange(new []{LabelForDefeatedEnemies, LabelForAttack, LabelForUltimate, IndicatorForUltimate, LabelForSpikedBall, LabelForSpeed, LabelForPanel});
+
+            Controls.AddRange(new[]
+            {
+                LabelForDefeatedEnemies, LabelForAttack, LabelForUltimate, IndicatorForUltimate, LabelForSpikedBall,
+                LabelForSpeed, LabelForPanel
+            });
             HideLabels();
             Controls.Add(LabelForRecord);
             Controls.Add(LabelForScore);
@@ -171,24 +183,14 @@ namespace WinFormsApp2
                 }
             };
             TimerForBlades.Start();
-            TimerCooldownAtack = new Timer(1000);
-            TimerCooldownAtack.Elapsed += (sender, e) => { Player.CanAttack = true; };
-            TimerCooldownUltimate = new Timer();
-            TimerCooldownUltimate.Interval = 15000;
-            TimerCooldownUltimate.Elapsed += (sender, e) =>
-            {
-                Player.UltimateIsReady = true;
-                IndicatorForUltimate.Image = new Bitmap(Path.Combine(
-                    new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
-                    "Models\\greenCircle.png"));
-                IndicatorForUltimate.Update();
-            };
+            TimerCooldownAttack = new Timer(1000);
+            TimerCooldownAttack.Elapsed += (sender, e) => { Player.CanAttack = true; };
         }
 
         public void GameOver(Graphics g)
         {
             if (GameIsStarted)
-                //GameOverSound.Play();
+                GameOverSound.Play();
             GameIsStarted = false;
             HideLabels();
             g.Clear(Color.White);
@@ -197,11 +199,11 @@ namespace WinFormsApp2
                     new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
                     "Models\\GameOver.png"));
             g.DrawImage(gameOverImage,
-                new Point(Width / 2 - gameOverImage.Width / 2, Height / 2 - gameOverImage.Height));
+                new Point(Width / 2 - gameOverImage.Width / 2, Height / 2 - gameOverImage.Height+30));
             RestartButton.Show();
             Record = Math.Max(Record, DefeatedEnemiesCount);
             LabelForRecord.Text = "Record: " + Record;
-            LabelForScore.Text = "Score: " + DefeatedEnemiesCount; 
+            LabelForScore.Text = "Score: " + DefeatedEnemiesCount;
             LabelForRecord.Update();
             LabelForScore.Update();
             LabelForRecord.Show();
@@ -221,9 +223,19 @@ namespace WinFormsApp2
                     break;
                 case Keys.A:
                     Player.DirLeft = 3;
+                    if (!Player.IsFlipped)
+                    {
+                        Player.Image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        Player.IsFlipped = true;
+                    }
                     break;
                 case Keys.D:
                     Player.DirRight = 3;
+                    if (Player.IsFlipped)
+                    {
+                        Player.Image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        Player.IsFlipped = false;
+                    }
                     break;
             }
         }
@@ -240,20 +252,28 @@ namespace WinFormsApp2
                     break;
                 case Keys.A:
                     Player.DirLeft = 0;
+                    if (Player.DirRight != 0 && Player.IsFlipped)
+                    {
+                        Player.Image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        Player.IsFlipped = false;
+                    }
                     break;
                 case Keys.D:
                     Player.DirRight = 0;
+                    if (Player.DirLeft != 0 && !Player.IsFlipped)
+                    {
+                        Player.Image.RotateFlip(RotateFlipType.RotateNoneFlipX);
+                        Player.IsFlipped = true;
+                    }
                     break;
             }
-
-            
         }
 
-        public void ThrowTheBlade(object sender, MouseEventArgs e)
+        public void Atack(object sender, MouseEventArgs e)
         {
             var dY = e.Y - Player.CenterY;
             var dX = e.X - Player.CenterX;
-            var angle = Math.Atan( dY / (double) dX) * 180 / Math.PI;
+            var angle = Math.Atan(dY / (double) dX) * 180 / Math.PI;
             if (dX < 0)
                 angle += 180;
             switch (e.Button)
@@ -261,14 +281,15 @@ namespace WinFormsApp2
                 case MouseButtons.Left:
                     if (!Player.CanAttack)
                         break;
-                    TimerCooldownAtack.Start();
                     ThrownBladeSound.Play();
                     Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle));
                     if (Upgrades.CanThrowThreeBlades)
                     {
-                        Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle-30));
-                        Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle+30));
+                        Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle - 30));
+                        Blades.Add(new Blade(Player.CenterX, Player.CenterY, angle + 30));
                     }
+
+                    TimerCooldownAttack.Start();
                     if (Upgrades.CanThrowDoubleBlade)
                     {
                         var timer = new Timer(100);
@@ -280,27 +301,44 @@ namespace WinFormsApp2
                         };
                         timer.Start();
                     }
+
                     Player.CanAttack = false;
-                    TimerCooldownAtack.Start();
+                    TimerCooldownAttack.Stop();
+                    TimerCooldownAttack.Start();
                     break;
                 case MouseButtons.Right:
-                    if (!Upgrades.UltimateUpgradeAvailable)
-                        break;
                     if (!Player.UltimateIsReady)
                         return;
-                    TimerCooldownUltimate.Start();
-                    IndicatorForUltimate.Image = new Bitmap(Path.Combine(
-                        new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
-                        "Models\\redCircle.png"));
-                    IndicatorForUltimate.Update();
-                    var list = new List<Blade>();
-                    for (int i = -36; i < 36; i++)
+                    switch (Upgrades.UltimateUpgrade)
                     {
-                        list.Add(new Blade(Player.CenterX, Player.CenterY, angle + i * 5));
+                        case "CircleOfBlades":
+                            TimerCooldownUltimate.Start();
+                            IndicatorForUltimate.Image = new Bitmap(Path.Combine(
+                                new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
+                                "Models\\redCircle.png"));
+                            IndicatorForUltimate.Update();
+                            var list = new List<Blade>();
+                            for (int i = -36; i < 36; i++)
+                            {
+                                list.Add(new Blade(Player.CenterX, Player.CenterY, angle + i * 5));
+                            }
+
+                            ThrownBladeSound.Play();
+                            Blades.AddRange(list);
+                            Player.UltimateIsReady = false;
+                            return;
+                        case "SlowDown":
+                            SlowDownSound.Play();
+                            TimerCooldownUltimate.Start();
+                            IndicatorForUltimate.Image = new Bitmap(Path.Combine(
+                                new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
+                                "Models\\redCircle.png"));
+                            IndicatorForUltimate.Update();
+                            foreach (var enemy in Enemies)
+                                enemy.Speed = 2f;
+                            Player.UltimateIsReady = false;
+                            return;
                     }
-                    ThrownBladeSound.Play();
-                    Blades.AddRange(list);
-                    Player.UltimateIsReady = false;
                     break;
             }
         }
@@ -323,12 +361,7 @@ namespace WinFormsApp2
         {
             foreach (var enemy in Enemies)
             {
-                var dirX = Player.CenterX - enemy.CenterPosX;
-                var dirY = Player.CenterY - enemy.CenterPosY;
-                enemy.PosX += dirX/(Math.Abs(dirX)+Math.Abs(dirY))*4f;
-                enemy.PosY += dirY/(Math.Abs(dirX)+Math.Abs(dirY))*4f;
-                enemy.CenterPosX += dirX/(Math.Abs(dirX)+Math.Abs(dirY))*4f;
-                enemy.CenterPosY += dirY/(Math.Abs(dirX)+Math.Abs(dirY))*4f;
+                enemy.Move();
             }
         }
 
@@ -405,10 +438,10 @@ namespace WinFormsApp2
         {
             if (Enemies.Count >= DefeatedEnemiesCount / (5 * Enemies.Count + 1) + 1)
                 return;
-            var firstTupleX = new Random().Next(LabelForPanel.Right-Enemy.Image.Width, Width);
+            var firstTupleX = new Random().Next(LabelForPanel.Right - Enemy.Image.Width, Width);
             var firstTupleY = new Random().Next(2) == 0 ? -Enemy.Image.Height : Height;
             var firstTuple = Tuple.Create(firstTupleX, firstTupleY);
-            var secondTupleX = new Random().Next(2) == 0 ? LabelForPanel.Right-Enemy.Image.Width : Width;
+            var secondTupleX = new Random().Next(2) == 0 ? LabelForPanel.Right - Enemy.Image.Width : Width;
             var secondTupleY = new Random().Next(-Enemy.Image.Height, Height);
             var secondTuple = Tuple.Create(secondTupleX, secondTupleY);
             var finalTuple = new Random().Next(2) == 0 ? firstTuple : secondTuple;
@@ -426,7 +459,7 @@ namespace WinFormsApp2
             };
             RestartButton = new Button
             {
-                Location = new Point(Width / 2 - 150, Height / 2 + 100),
+                Location = new Point(Width / 2 - 150, Height / 2 + 130),
                 Size = new Size(300, 150),
                 Text = "Restart",
                 Font = new Font("Arial", 30, FontStyle.Bold),
@@ -460,8 +493,8 @@ namespace WinFormsApp2
             LabelForRecord.Hide();
             LabelForScore.Hide();
             ShowLabels();
-            
         }
+
         protected override void OnPaint(PaintEventArgs e)
         {
             Graphics g = e.Graphics;

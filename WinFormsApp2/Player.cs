@@ -15,6 +15,7 @@ namespace WinFormsApp2
         public static float DirDown;
         public static float DirLeft;
         public static float DirUp;
+        public static int I;
 
         public static readonly Image Image = new Bitmap(Path.Combine(
             new DirectoryInfo(Directory.GetCurrentDirectory()).Parent.Parent.Parent.FullName,
@@ -27,8 +28,8 @@ namespace WinFormsApp2
         public static bool CanAttack;
         public static bool UltimateIsReady;
         public static float Speed;
+        public static bool IsFlipped;
 
-        
 
         public static void Move(object sender, EventArgs e)
         {
@@ -64,5 +65,6 @@ namespace WinFormsApp2
             CanAttack = true;
             UltimateIsReady = true;
         }
+
     }
 }
